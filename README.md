@@ -237,7 +237,7 @@ journalctl \-f \-o cat | grep \-i gotify
 📋 Compatibility
 ----------------
 
-*   **GNOME Shell**: 46, 47, 48+
+*   **GNOME Shell**: 46, 47, 48, 49
     
 *   **Gotify Server**: 2.0+
     
