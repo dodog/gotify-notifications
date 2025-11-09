@@ -18,14 +18,14 @@
 
 .gotify-title {
     font-weight: bold;
-    font-size: 14px;
+    font-size: 18px;
     color: #FFD700;
 }
 
 .gotify-message {
-    font-size: 12px;
+    font-size: 16px;
     color: #ffffff;
-    width: 370px;
+    width: 470px;
     /* Allow natural line breaks from our manual wrapping */
     height: auto;
     /* Ensure newlines are respected */
@@ -45,7 +45,7 @@
 
 .gotify-close-icon {
     color: #FFD700;
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .gotify-close-button:hover {

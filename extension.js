@@ -148,7 +148,7 @@ export default class GotifyExtension extends Extension {
             style_class: 'gotify-notification',
             reactive: true,
             track_hover: true,
-            width: 400,
+            width: 500,
             height: totalHeight
         });
         
