@@ -3,7 +3,7 @@ Gotify Notifications GNOME Extension
 
 A GNOME Shell extension that displays persistent notifications from your Gotify server. Features custom notification windows that stay visible until manually closed, completely independent of GNOME's native notification system.
 
-<img src="https://img.shields.io/badge/GNOME-48+-orange?style=flat-square&logo=gnome"/> <img src="https://img.shields.io/badge/Gotify-Compatible-success?style=flat-square"/>
+ [<img src="https://img.shields.io/badge/GNOME-48+-orange?style=flat-square&logo=gnome"/>](#)  [<img src="https://img.shields.io/badge/Gotify-Compatible-success?style=flat-square"/>](#) 
 
 ✨ Features
 ----------
