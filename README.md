@@ -30,13 +30,16 @@ A GNOME Shell extension that displays persistent notifications from your Gotify 
 🖼️ Screenshots
 ---------------
 
-_(Add your screenshots here)_
 
-*   Notification example
+*   Notifications example
+  
+  ![gotify-notifications](https://github.com/user-attachments/assets/05c7debd-58a0-4835-a4c9-bfa1db19fbcf)
+
     
 *   Settings panel
-    
-*   Status indicator menu
+
+   ![gotify-notifications-settings](https://github.com/user-attachments/assets/229937ea-664a-49de-b086-cbf631e61e87)
+
     
 
 📦 Installation
