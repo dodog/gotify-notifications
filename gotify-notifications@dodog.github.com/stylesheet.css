@@ -1,0 +1,58 @@
+/*  Gotify notifications extension                  */
+/*  Custom Gotify notifications                      */   
+/*  https://github.com/dodog/gotify-notifications   */
+
+.gotify-notification {
+    background-color: #333333;
+    border-radius: 20px;
+    border: 2px solid #555555;
+    color: #ffffff;
+    padding: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+}
+
+.gotify-header {
+    spacing: 10px;
+    margin-bottom: 10px;
+}
+
+.gotify-title {
+    font-weight: bold;
+    font-size: 18px;
+    color: #FFD700;
+}
+
+.gotify-message {
+    font-size: 16px;
+    color: #ffffff;
+    width: 470px;
+    /* Allow natural line breaks from our manual wrapping */
+    height: auto;
+    /* Ensure newlines are respected */
+    white-space: pre-wrap;
+    /* Add some spacing between lines */
+    line-height: 1.4;
+}
+
+.gotify-close-button {
+    background-color: transparent;
+    border: none;
+    border-radius: 10px;
+    padding: 5px;
+    width: 20px;
+    height: 20px;
+}
+
+.gotify-close-icon {
+    color: #FFD700;
+    font-size: 14px;
+}
+
+.gotify-close-button:hover {
+    background-color: rgba(255, 215, 0, 0.2);
+}
+
+.gotify-notification:hover {
+    background-color: #3a3a3a;
+    border-color: #666666;
+}
