@@ -53,12 +53,19 @@ export default class GotifyExtension extends Extension {
         console.log('Gotify: Disabling extension...');
         this._stopPolling();
         
-        // Close all active notifications
+        // Close all active notifications and clear the array
         this._clearAllNotifications();
+        this._notifications = []; // Ensure the array is cleared
         
         if (this._statusIndicator) {
             this._statusIndicator.destroy();
             this._statusIndicator = null;
+        }
+        
+        // Destroy the status icon if it exists independently
+        if (this._statusIcon) {
+            this._statusIcon.destroy();
+            this._statusIcon = null;
         }
         
         if (this._settings) {
