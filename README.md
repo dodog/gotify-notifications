@@ -99,7 +99,7 @@ gnome-extensions enable gotify-notifications@dodog.github.com
 
 | Setting              | Type    | Default                  | Description                                          |
 |----------------------|---------|--------------------------|------------------------------------------------------|
-| Server URL           | String  | https://gotify.funguj.eu | Your Gotify server address                           |
+| Server URL           | String  | https://gotify.server.url| Your Gotify server address                           |
 | Client Token         | String  | (empty)                  | Your Gotify application token                        |
 | Poll Interval        | Integer | 10                       | How often to check for notifications (5-300 seconds) |
 | Notification Timeout | Integer | 0                        | Auto-close timer (0 = never auto-close)              |
@@ -154,7 +154,7 @@ gnome-extensions enable gotify-notifications@dodog.github.com
 
  ```bash
 
-git clone https://github.com/yourusername/gnome-gotify-notifications.git
+git clone https://github.com/dodog/gotify-notifications.git
 cd gnome-gotify-notifications
 
 # Enable development mode
@@ -261,7 +261,7 @@ Contributions are welcome! Please feel free to submit pull requests or open issu
 📄 License
 ----------
 
-This project is licensed under the GPL-3.0 License - see the [LICENSE](https://license/) file for details.
+This project is licensed under the GPL-3.0 License - see the [LICENSE](https://github.com/dodog/gotify-notifications/blob/main/LICENSE) file for details.
 
 🙏 Acknowledgments
 ------------------
@@ -276,7 +276,7 @@ This project is licensed under the GPL-3.0 License - see the [LICENSE](https://
 ❓ Support
 ---------
 
-*   **Issues**: [GitHub Issues](https://github.com/yourusername/gnome-gotify-notifications/issues)
+*   **Issues**: [GitHub Issues](https://github.com/dodog/gotify-notifications/issues)
     
 *   **Gotify Documentation**: [gotify.net](https://gotify.net/docs)
     
