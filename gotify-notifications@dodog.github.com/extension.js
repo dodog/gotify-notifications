@@ -35,14 +35,7 @@ export default class GotifyExtension extends Extension {
         
         // Create status indicator
         this._createStatusIndicator();
-        
-        // Test with immediate custom notification
-        GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 2, () => {
-            console.log('Gotify: Showing test custom notification');
-            this._showCustomNotification('Gotify Test', 'Setup your Gotify url and token in extension settings! Click the X to close.');
-            return GLib.SOURCE_REMOVE;
-        });
-        
+                
         // Start polling
         this._startPolling();
         
