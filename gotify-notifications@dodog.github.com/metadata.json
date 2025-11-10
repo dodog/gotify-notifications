@@ -4,6 +4,6 @@
   "uuid": "gotify-notifications@dodog.github.com",
   "shell-version": ["46", "47", "48", "49"],
   "url": "https://github.com/dodog/gotify-notifications",
-  "version": 1,
+  "version": 2,
   "settings-schema": "org.gnome.shell.extensions.gotify-notifications"
 }
