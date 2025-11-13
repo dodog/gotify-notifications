@@ -2,26 +2,36 @@
 <schemalist>
   <schema id="org.gnome.shell.extensions.gotify-notifications" path="/org/gnome/shell/extensions/gotify-notifications/">
     <key name="gotify-url" type="s">
-      <default>"https://gotify.server.url"</default>
+      <default>''</default>
       <summary>Gotify Server URL</summary>
       <description>The URL of your Gotify server</description>
     </key>
     <key name="client-token" type="s">
-      <default>"YOUR_TOKEN"</default>
+      <default>''</default>
       <summary>Client Token</summary>
       <description>Your Gotify client token</description>
     </key>
+    <key name="request-timeout" type="i">
+    <default>10</default>
+    <summary>Request Timeout</summary>
+    <description>How long to wait for server response (seconds)</description>
+    </key>
     <key name="poll-interval" type="i">
-      <default>10</default>
+      <default>30</default>
       <range min="5" max="300"/>
       <summary>Poll Interval</summary>
-      <description>How often to check for new notifications (in seconds)</description>
+      <description>How often to check for new notifications (seconds)</description>
     </key>
     <key name="notification-timeout" type="i">
       <default>0</default>
       <range min="0" max="3600"/>
       <summary>Notification Timeout</summary>
-      <description>How long to show notifications (0 = never auto-close)</description>
+      <description>How long to show notifications (seconds, 0 = never auto-close)</description>
+    </key>
+    <key name="debug-mode" type="b">
+      <default>false</default>
+      <summary>Debug Mode</summary>
+      <description>Show detailed logs in console</description>
     </key>
   </schema>
 </schemalist>
