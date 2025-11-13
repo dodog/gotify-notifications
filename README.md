@@ -38,7 +38,7 @@ A GNOME Shell extension that displays persistent notifications from your Gotify 
     
 *   Settings panel
 
-   ![gotify-notifications-settings](https://github.com/user-attachments/assets/229937ea-664a-49de-b086-cbf631e61e87)
+ ![gotify-notification-settings_v1 0 3](https://github.com/user-attachments/assets/8732517e-2aa2-41a2-860e-af4d4d894ba7)
 
     
 
