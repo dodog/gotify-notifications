@@ -56,3 +56,8 @@
     background-color: #3a3a3a;
     border-color: #666666;
 }
+
+/* Error state for URL input */
+error {
+    color: #ff6b6b;
+}
