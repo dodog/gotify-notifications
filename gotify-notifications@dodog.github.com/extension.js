@@ -4,6 +4,7 @@
 
 'use strict';
 
+import GObject from 'gi://GObject';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import St from 'gi://St';
@@ -17,8 +18,10 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 
 // Notification Manager class to handle notification-related functionality
-class NotificationManager {
+const NotificationManager = GObject.registerClass(
+class NotificationManager extends GObject.Object {
     constructor(extension) {
+        super();
         this.extension = extension;
         this._notifications = [];
     }
@@ -42,7 +45,7 @@ class NotificationManager {
         
         // Create main container
         const container = new St.BoxLayout({
-            vertical: true,
+            orientation: Clutter.Orientation.VERTICAL,
             style_class: 'gotify-notification',
             reactive: true,
             track_hover: true,
@@ -52,6 +55,7 @@ class NotificationManager {
         
         // Header with title and close button
         const header = new St.BoxLayout({
+            orientation: Clutter.Orientation.HORIZONTAL, 
             style_class: 'gotify-header'
         });
         
@@ -66,7 +70,9 @@ class NotificationManager {
             child: new St.Label({ text: '✖', style_class: 'gotify-close-icon' })
         });
         
-        closeButton.connect('clicked', () => {
+        // Store close button reference for safe disconnection
+        container._closeButton = closeButton;
+        container._closeHandlerId = closeButton.connect('clicked', () => {
             if (debugMode) {
                 console.log('Gotify: Closing notification');
             }
@@ -97,26 +103,34 @@ class NotificationManager {
         this._notifications.push(container);
         
         // Auto-close if timeout is set (0 = never auto-close)
-        const timeout = this.extension._settings.get_int('notification-timeout');
-        if (timeout > 0) {
-            GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, timeout, () => {
-                if (this._notifications.includes(container)) {
-                    this._removeNotification(container);
+        const timeoutSeconds = this.extension._settings.get_int('notification-timeout');
+        if (timeoutSeconds > 0) {
+            // STORE the timeout ID so it can be removed later
+            container._autoCloseTimeoutId = GLib.timeout_add_seconds(
+                GLib.PRIORITY_DEFAULT, 
+                timeoutSeconds, 
+                () => {
+                    if (this._notifications.includes(container)) {
+                        this._removeNotification(container);
+                    }
+                    return GLib.SOURCE_REMOVE;
                 }
-                return GLib.SOURCE_REMOVE;
-            });
+            );
         }
         
         // Fade in animation
-        container.opacity = 0;
-        container.ease({
-            opacity: 255,
-            duration: 300,
-            mode: Clutter.AnimationMode.EASE_OUT_QUAD
-        });
-        
-        if (debugMode) {
-            console.log(`Gotify: Custom notification created with ${lineCount} lines, height ${totalHeight}`);
+        try {
+            container.opacity = 0;
+            container.ease({
+                opacity: 255,
+                duration: 300,
+                mode: Clutter.AnimationMode.EASE_OUT_QUAD
+            });
+        } catch (error) {
+            if (debugMode) {
+                console.log('Gotify: Animation failed, proceeding without:', error);
+            }
+            container.opacity = 255; // Ensure visibility
         }
     }
 
@@ -155,29 +169,151 @@ class NotificationManager {
         return lines.join('\n');
     }
 
+    clearAllNotificationsSync() {
+        const debugMode = this.extension._settings?.get_boolean('debug-mode') || false;
+        if (debugMode) {
+            console.log('Gotify: Synchronously clearing all notifications');
+        }
+        
+        // Create a copy to avoid modification during iteration
+        const notificationsCopy = [...this._notifications];
+        
+         notificationsCopy.forEach(notification => {
+            // Remove the auto-close timeout if it exists
+            if (notification._autoCloseTimeoutId) {
+                try {
+                    GLib.source_remove(notification._autoCloseTimeoutId);
+                } catch (e) {
+                    // Ignore if already removed
+                }
+                notification._autoCloseTimeoutId = null;
+            }   
+
+            // Disconnect the close button signal safely
+            if (notification._closeHandlerId && notification._closeButton) {
+                try {
+                    notification._closeButton.disconnect(notification._closeHandlerId);
+                } catch (e) {
+                    // Ignore errors - button might be already destroyed
+                    if (debugMode) {
+                        console.log('Gotify: Close button already disconnected');
+                    }
+                }
+                notification._closeHandlerId = null;
+                notification._closeButton = null;
+            }
+            
+            // Destroy immediately without animation
+            try {
+                notification.destroy();
+            } catch (error) {
+                // Ignore errors if notification was already destroyed
+                if (debugMode) {
+                    console.log('Gotify: Notification already destroyed:', error);
+                }
+            }
+        });
+        
+        // Clear the array
+        this._notifications.length = 0;
+        
+        if (debugMode) {
+            console.log('Gotify: All notifications cleared synchronously');
+        }
+    }
+
+    // Keep the existing animated version for normal use
+    clearAllNotifications() {
+        const debugMode = this.extension._settings?.get_boolean('debug-mode') || false;
+        if (debugMode) {
+            console.log('Gotify: Clearing all notifications with animation');
+        }
+        const notificationsCopy = [...this._notifications];
+        notificationsCopy.forEach(notification => {
+            this._removeNotification(notification);
+        });
+    }
+
     _removeNotification(notification) {
         const debugMode = this.extension._settings?.get_boolean('debug-mode') || false;
         if (debugMode) {
             console.log('Gotify: Removing notification');
         }
-        
-        notification.ease({
-            opacity: 0,
-            duration: 200,
-            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
-            onComplete: () => {
-                // Remove from array
-                const index = this._notifications.indexOf(notification);
-                if (index > -1) {
-                    this._notifications.splice(index, 1);
+
+        // Remove the auto-close timeout if it exists
+        if (notification._autoCloseTimeoutId) {
+            try {
+                GLib.source_remove(notification._autoCloseTimeoutId);
+            } catch (error) {
+                if (debugMode) {
+                    console.log('Gotify: Timeout removal failed:', error);
                 }
-                
-                // Destroy the widget
-                notification.destroy();
-                // Reposition remaining notifications
-                this._repositionNotifications();
             }
-        });
+            notification._autoCloseTimeoutId = null;
+        }
+        
+        // Disconnect the close button signal safely
+        if (notification._closeHandlerId && notification._closeButton) {
+            try {
+                notification._closeButton.disconnect(notification._closeHandlerId);
+            } catch (error) {
+                // Ignore errors - button might be already destroyed
+                if (debugMode) {
+                    console.log('Gotify: Close button already disconnected:', error);
+                }
+            }
+            notification._closeHandlerId = null;
+            notification._closeButton = null;
+        }
+
+        // Try animation, but have fallback for immediate destruction
+        try {
+            notification.ease({
+                opacity: 0,
+                duration: 200,
+                mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+                onComplete: () => {
+                    try {
+                        // Remove from array
+                        const index = this._notifications.indexOf(notification);
+                        if (index > -1) {
+                            this._notifications.splice(index, 1);
+                        }
+                        
+                        // Destroy the widget
+                        notification.destroy();
+                        // Reposition remaining notifications
+                        this._repositionNotifications();
+                    } catch (error) {
+                        if (debugMode) {
+                            console.log('Gotify: Animation completion failed:', error);
+                        }
+                        // Ensure cleanup happens even if animation completion fails
+                        const index = this._notifications.indexOf(notification);
+                        if (index > -1) {
+                            this._notifications.splice(index, 1);
+                        }
+                        try {
+                            notification.destroy();
+                        } catch (e) {}
+                        this._repositionNotifications();
+                    }
+                }
+            });
+        } catch (error) {
+            // Fallback if animation fails
+            if (debugMode) {
+                console.log('Gotify: Animation failed, using immediate destruction:', error);
+            }
+            const index = this._notifications.indexOf(notification);
+            if (index > -1) {
+                this._notifications.splice(index, 1);
+            }
+            try {
+                notification.destroy();
+            } catch (e) {}
+            this._repositionNotifications();
+        }
     }
 
     _repositionNotifications() {
@@ -185,41 +321,44 @@ class NotificationManager {
             notification.y = 20 + (index * 130);
         });
     }
-
-    clearAllNotifications() {
-        const debugMode = this.extension._settings?.get_boolean('debug-mode') || false;
-        if (debugMode) {
-            console.log('Gotify: Clearing all notifications');
-        }
-        const notificationsCopy = [...this._notifications];
-        notificationsCopy.forEach(notification => {
-            this._removeNotification(notification);
-        });
-    }
-}
+});
 
 // Network Client class to handle HTTP requests using Soup
-class NetworkClient {
+const NetworkClient = GObject.registerClass(
+class NetworkClient extends GObject.Object {
     constructor(settings) {
+        super();
         this._session = new Soup.Session();
+        this._settings = settings;
         
         if (settings && settings.get_int) {
             try {
                 this._session.timeout = settings.get_int('request-timeout');
             } catch (error) {
-                console.log('Gotify: Using default timeout, settings error:', error);
+                const debugMode = this._isDebugMode();
+                if (debugMode) {
+                    console.log('Gotify: Using default timeout, settings error:', error);
+                }
                 this._session.timeout = 10;
             }
         } else {
-            this._session.timeout = 10; // Default fallback
+            this._session.timeout = 10;
         }
         
         this._session.user_agent = 'gotify-notifications-extension/1.0';
     }
 
+    _isDebugMode() {
+        return this._settings && this._settings.get_boolean('debug-mode');
+    }
+
     async httpGet(url) {
         return new Promise((resolve, reject) => {
-            console.log('Gotify: Making HTTP request with Soup to:', url);
+            const debugMode = this._isDebugMode();
+            
+            if (debugMode) {
+                console.log('Gotify: Making HTTP request with Soup to:', url);
+            }
             
             try {
                 const message = Soup.Message.new('GET', url);
@@ -231,22 +370,47 @@ class NetworkClient {
 
                 // Set headers
                 const headers = message.get_request_headers();
-                headers.append('Accept', 'application/json');
-                headers.append('User-Agent', 'gotify-notifications-extension/1.0');
+                
+                // Use Authorization header instead of URL parameter
+                const clientToken = this._settings?.get_string('client-token') || '';
+                if (clientToken) {
+                    try {
+                        headers.append('X-Gotify-Key', clientToken);
+                    } catch (error) {
+                        if (debugMode) {
+                            console.log('Gotify: Failed to set auth header:', error);
+                        }
+                    }
+                }
+                
+                try {
+                    headers.append('Accept', 'application/json');
+                    headers.append('User-Agent', 'gotify-notifications-extension/1.0');
+                } catch (error) {
+                    if (debugMode) {
+                        console.log('Gotify: Failed to set headers:', error);
+                    }
+                }
 
                 this._session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, null, (session, result) => {
                     try {
                         const bytes = this._session.send_and_read_finish(result);
                         const status = message.get_status();
                         
-                        console.log('Gotify: HTTP status:', status);
+                        if (debugMode) {
+                            console.log('Gotify: HTTP status:', status);
+                        }
                         
                         if (status === Soup.Status.OK && bytes) {
-                            console.log('Gotify: HTTP request successful');
+                            if (debugMode) {
+                                console.log('Gotify: HTTP request successful');
+                            }
                             resolve(bytes);
                         } else {
                             const errorMsg = `HTTP error ${status}`;
-                            console.error('Gotify: Soup request failed:', errorMsg);
+                            if (debugMode) {
+                                console.error('Gotify: Soup request failed:', errorMsg);
+                            }
                             
                             // Provide more specific error messages
                             if (status === Soup.Status.SSL_FAILED) {
@@ -255,17 +419,23 @@ class NetworkClient {
                                 reject(new Error('Cannot resolve server address - check your Gotify URL'));
                             } else if (status === Soup.Status.CANT_CONNECT) {
                                 reject(new Error('Cannot connect to server - check your Gotify URL and network connection'));
+                            } else if (status === Soup.Status.UNAUTHORIZED) {
+                                reject(new Error('Authentication failed - check your client token'));
                             } else {
                                 reject(new Error(errorMsg));
                             }
                         }
                     } catch (error) {
-                        console.error('Gotify: HTTP request processing failed:', error);
+                        if (debugMode) {
+                            console.error('Gotify: HTTP request processing failed:', error);
+                        }
                         reject(error);
                     }
                 });
             } catch (error) {
-                console.error('Gotify: Failed to create HTTP request:', error);
+                if (debugMode) {
+                    console.error('Gotify: Failed to create HTTP request:', error);
+                }
                 reject(error);
             }
         });
@@ -274,69 +444,169 @@ class NetworkClient {
     destroy() {
         if (this._session) {
             this._session.abort();
-            // Close the session properly
+            this._session.close();
             this._session = null;
         }
     }
-}
+});
 
-// Main extension class - now much smaller and focused on coordination
+// Main extension class - focused on coordination
 export default class GotifyExtension extends Extension {
     constructor(metadata) {
         super(metadata);
+    }
+
+    enable() {
+        // Initialize settings
+        this._settings = this.getSettings();
+        
+        const debugMode = this._settings?.get_boolean('debug-mode') || false;
+        if (debugMode) {
+            console.log('Gotify: Enabling extension...');
+        }
+
+        // All property initialization
         this._pollTimeoutId = null;
         this._isConnected = false;
         this._statusIndicator = null;
         this._statusIcon = null;
         this._lastMessageId = 0;
-        this._settings = null;
         this._notificationManager = null;
         this._networkClient = null;
         this._consecutiveErrors = 0;
-    }
-
-    enable() {
-        console.log('Gotify: Enabling extension...');
-        
-        // Initialize settings
-        this._settings = this.getSettings();
+        this._handlerIds = []; 
+        this._menuItems = []; 
+        this._pollIntervalChangedId = null; 
+        this._requestTimeoutChangedId = null; 
       
         // Initialize managers
         this._notificationManager = new NotificationManager(this);
-         this._networkClient = new NetworkClient(this._settings);
+        this._networkClient = new NetworkClient(this._settings);
         
+        // Set up settings change listeners
+        this._setupSettingsListeners();
+
         // Create status indicator
         this._createStatusIndicator();
                 
         // Start polling
         this._startPolling();
         
-        console.log('Gotify Notifications extension enabled');
+        if (debugMode) {
+            console.log('Gotify Notifications extension enabled');
+        }
     }
 
     disable() {
-        console.log('Gotify: Disabling extension...');
+        const debugMode = this._settings?.get_boolean('debug-mode') || false;
+        if (debugMode) {
+            console.log('Gotify: Disabling extension...');
+        }
+        
         this._stopPolling();
+
+        // Clean up settings change listeners
+        if (this._pollIntervalChangedId) {
+            try {
+                this._settings.disconnect(this._pollIntervalChangedId);
+            } catch (error) {
+                if (debugMode) {
+                    console.log('Gotify: Failed to disconnect poll interval listener:', error);
+                }
+            }
+            this._pollIntervalChangedId = null;
+        }
+        
+        // Clean up request timeout listener
+        if (this._requestTimeoutChangedId) {
+            try {
+                this._settings.disconnect(this._requestTimeoutChangedId);
+            } catch (error) {
+                if (debugMode) {
+                    console.log('Gotify: Failed to disconnect timeout listener:', error);
+                }
+            }
+            this._requestTimeoutChangedId = null;
+        }
+
+        // SIGNAL CLEANUP: Disconnect all stored signal handlers
+        if (this._handlerIds) {
+            this._handlerIds.forEach(({obj, id}) => {
+                try {
+                    if (obj && typeof obj.disconnect === 'function') {
+                        obj.disconnect(id);
+                    }
+                } catch (error) {
+                    // Ignore errors if object was already destroyed
+                    if (debugMode) {
+                        console.log('Gotify: Signal already disconnected:', error);
+                    }
+                }
+            });
+            this._handlerIds = null;
+        }
+        
+        // MENU ITEM CLEANUP: Destroy stored menu items
+        if (this._menuItems) {
+            this._menuItems.forEach(item => {
+                try {
+                    if (item && typeof item.destroy === 'function') {
+                        item.destroy();
+                    }
+                } catch (error) {
+                    // Ignore errors if item was already destroyed
+                    if (debugMode) {
+                        console.log('Gotify: Menu item already destroyed:', error);
+                    }
+                }
+            });
+            this._menuItems = null;
+        }
         
         // Clear all notifications
         if (this._notificationManager) {
-            this._notificationManager.clearAllNotifications();
+            try {
+                this._notificationManager.clearAllNotificationsSync();
+            } catch (error) {
+                if (debugMode) {
+                    console.log('Gotify: Notification cleanup failed:', error);
+                }
+            }
+            this._notificationManager = null;
         }
         
         // Clean up status indicator
         if (this._statusIndicator) {
-            this._statusIndicator.destroy();
+            try {
+                this._statusIndicator.destroy();
+            } catch (error) {
+                if (debugMode) {
+                    console.log('Gotify: Status indicator destruction failed:', error);
+                }
+            }
             this._statusIndicator = null;
         }
         
         if (this._statusIcon) {
-            this._statusIcon.destroy();
+            try {
+                this._statusIcon.destroy();
+            } catch (error) {
+                if (debugMode) {
+                    console.log('Gotify: Status icon destruction failed:', error);
+                }
+            }
             this._statusIcon = null;
         }
         
         // Clean up network client
         if (this._networkClient) {
-            this._networkClient.destroy();
+            try {
+                this._networkClient.destroy();
+            } catch (error) {
+                if (debugMode) {
+                    console.log('Gotify: Network client cleanup failed:', error);
+                }
+            }
             this._networkClient = null;
         }
         
@@ -347,12 +617,14 @@ export default class GotifyExtension extends Extension {
         // Reset error counter
         this._consecutiveErrors = 0;
         
-        console.log('Gotify Notifications extension disabled');
+        if (debugMode) {
+            console.log('Gotify Notifications extension disabled');
+        }
     }
 
     _createStatusIndicator() {
         this._statusIndicator = new PanelMenu.Button(0.0, this.metadata.uuid, false);
-                
+        
         this._statusIcon = new St.Icon({
             gicon: new Gio.ThemedIcon({ name: 'bell-outline-symbolic' }),
             style_class: 'system-status-icon'
@@ -360,39 +632,53 @@ export default class GotifyExtension extends Extension {
         
         this._statusIndicator.add_child(this._statusIcon);
         
-        // Add menu items
+        // Store menu item references
+        this._menuItems = [];
+        
         const menu = this._statusIndicator.menu;
         
         const testItem = new PopupMenu.PopupMenuItem('Test Custom Notification');
-        testItem.connect('activate', () => {
+        const testHandlerId = testItem.connect('activate', () => {
             const debugMode = this._settings.get_boolean('debug-mode');
             if (debugMode) {
                 console.log('Gotify: Manual custom test notification triggered');
             }
             this._notificationManager.showCustomNotification('Manual Test', 'This is a persistent custom notification! Close with X button.');
         });
+        this._handlerIds.push({obj: testItem, id: testHandlerId});
+        this._menuItems.push(testItem);
         menu.addMenuItem(testItem);
         
         const connectionItem = new PopupMenu.PopupMenuItem('Connect/Disconnect');
-        connectionItem.connect('activate', () => {
+        const connectionHandlerId = connectionItem.connect('activate', () => {
             this._toggleConnection();
         });
+        this._handlerIds.push({obj: connectionItem, id: connectionHandlerId});
+        this._menuItems.push(connectionItem);
         menu.addMenuItem(connectionItem);
         
         const settingsItem = new PopupMenu.PopupMenuItem('Settings');
-        settingsItem.connect('activate', () => {
+        const settingsHandlerId = settingsItem.connect('activate', () => {
             this.openPreferences();
         });
+        this._handlerIds.push({obj: settingsItem, id: settingsHandlerId});
+        this._menuItems.push(settingsItem);
         menu.addMenuItem(settingsItem);
         
         const clearItem = new PopupMenu.PopupMenuItem('Clear All Notifications');
-        clearItem.connect('activate', () => {
+        const clearHandlerId = clearItem.connect('activate', () => {
             this._notificationManager.clearAllNotifications();
         });
+        this._handlerIds.push({obj: clearItem, id: clearHandlerId});
+        this._menuItems.push(clearItem);
         menu.addMenuItem(clearItem);
         
         Main.panel.addToStatusArea(this.metadata.uuid, this._statusIndicator);
-        console.log('Gotify: Status indicator created');
+        
+        const debugMode = this._settings?.get_boolean('debug-mode') || false;
+        if (debugMode) {
+            console.log('Gotify: Status indicator created');
+        }
         
         // Update initial status
         this._updateStatusIcon();
@@ -410,7 +696,6 @@ export default class GotifyExtension extends Extension {
         const iconName = this._isConnected ? 
             'bell-symbolic' : 'bell-disabled-symbolic';
         this._statusIcon.gicon = new Gio.ThemedIcon({ name: iconName });
-        
     }
 
     _startPolling() {
@@ -441,16 +726,54 @@ export default class GotifyExtension extends Extension {
         }
     }
 
+    // Listener for settings change 
+    _setupSettingsListeners() {
+        const debugMode = this._settings.get_boolean('debug-mode');
+        
+        // Listen for poll-interval changes
+        this._pollIntervalChangedId = this._settings.connect('changed::poll-interval', () => {
+            if (debugMode) {
+                const newInterval = this._settings.get_int('poll-interval');
+                console.log(`Gotify: Poll interval changed to ${newInterval} seconds, restarting polling...`);
+            }
+            
+            // Only restart if we're currently connected and polling
+            if (this._isConnected) {
+                this._startPolling();
+            }
+        });
+        
+        // Listen for request-timeout changes
+        this._requestTimeoutChangedId = this._settings.connect('changed::request-timeout', () => {
+            if (debugMode) {
+                const newTimeout = this._settings.get_int('request-timeout');
+                console.log(`Gotify: Request timeout changed to ${newTimeout} seconds`);
+            }    
+            // NetworkClient will use the new timeout on next request
+            // No need to restart anything immediately
+        });
+
+        if (debugMode) {
+            console.log('Gotify: Settings change listeners registered');
+        }
+    }
+
     _stopPolling() {
         if (this._pollTimeoutId) {
-            GLib.source_remove(this._pollTimeoutId);
+            try {
+                GLib.source_remove(this._pollTimeoutId);
+            } catch (error) {
+                if (this._settings?.get_boolean('debug-mode')) {
+                    console.log('Gotify: Poll timeout removal failed:', error);
+                }
+            }
             this._pollTimeoutId = null;
         }
         
         this._isConnected = false;
         this._updateStatusIcon();
         
-        const debugMode = this._settings.get_boolean('debug-mode');
+        const debugMode = this._settings?.get_boolean('debug-mode');
         if (debugMode) {
             console.log('Gotify: Stopped polling');
         }
@@ -458,11 +781,11 @@ export default class GotifyExtension extends Extension {
 
     async _pollNotifications() {
         const gotifyUrl = this._settings.get_string('gotify-url');
-        const clientToken = this._settings.get_string('client-token');
         const debugMode = this._settings.get_boolean('debug-mode');
         
         // Validate settings
-        if (!gotifyUrl || !clientToken) {
+        const clientToken = this._settings.get_string('client-token') || '';
+        if (!gotifyUrl || !clientToken.trim()) {
             if (debugMode) {
                 console.log('Gotify: Missing URL or token in settings');
             }
@@ -471,7 +794,7 @@ export default class GotifyExtension extends Extension {
             if (this._consecutiveErrors === 0) {
                 this._notificationManager.showCustomNotification(
                     'Gotify Configuration Required',
-                    'Please set your Gotify server URL and client token in extension settings.'
+                    'Please set your Gotify server URL in extension settings.'
                 );
             }
             
@@ -485,8 +808,9 @@ export default class GotifyExtension extends Extension {
         if (this._consecutiveErrors > 0) {
             this._consecutiveErrors = 0;
         }
-        
-        const url = `${gotifyUrl}/message?token=${clientToken}&limit=5`;
+
+        // SECURE URL no longer contains token
+        const url = `${gotifyUrl}/message?limit=5`;
         
         if (debugMode) {
             console.log('Gotify: Fetching from URL:', url);
@@ -537,11 +861,14 @@ export default class GotifyExtension extends Extension {
             this._updateStatusIcon();
             this._consecutiveErrors = 0; // Reset on successful poll
             
+
         } catch (error) {
-            console.error('Gotify: Failed to poll:', error);
+            if (debugMode) {
+                console.error('Gotify: Failed to poll:', error);
+            }
             this._isConnected = false;
             this._updateStatusIcon();
-            
+
             // Show connection error after multiple consecutive failures to avoid spam
             if (this._consecutiveErrors++ > 3) {
                 this._notificationManager.showCustomNotification(
