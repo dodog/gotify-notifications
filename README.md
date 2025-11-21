@@ -8,11 +8,11 @@ A GNOME Shell extension that displays persistent notifications from your Gotify 
 ✨ Features
 ----------
 
-*   🔔 **Persistent Notifications** - Custom notification windows that stay until manually closed
+*   🔔 **Independent Persistent Notifications** - Custom notification windows that stay until manually closed
     
 *   📝 **Text Wrapping** - Automatic wrapping for long messages with manual line breaking
     
-*   ⚙️ **Configurable Settings** - Easy GUI configuration for server URL, token, and behavior
+*   ⚙️ **Configurable Settings** - Easy GUI configuration for server URL, secure token and behavior
     
 *   🔄 **Auto-Polling** - Automatically checks for new notifications at configurable intervals
     
@@ -25,33 +25,17 @@ A GNOME Shell extension that displays persistent notifications from your Gotify 
 *   🎯 **Stacking Notifications** - Multiple notifications stack neatly at top of screen
     
 *   🎪 **Smooth Animations** - Fade in/out effects for notifications
-    
 
-🖼️ Screenshots
+
+    
+🚀 Install Now
 ---------------
 
+### Method 1: 📦 Available on extensions.gnome.org:
 
-*   Notifications example
-  
-  ![gotify-notifications](https://github.com/user-attachments/assets/05c7debd-58a0-4835-a4c9-bfa1db19fbcf)
-
-    
-*   Settings panel
-
- ![gotify-notification-settings_v1 0 3](https://github.com/user-attachments/assets/8732517e-2aa2-41a2-860e-af4d4d894ba7)
-
-    
-
-📦 Installation
----------------
-
-### Method 1: From GNOME Extensions Website
-
-1.  Visit [extensions.gnome.org](https://extensions.gnome.org/)
-    
-2.  Search for "Gotify Notifications"
-    
-3.  Click install
+1.  [👉 Install Gotify Notifications from extensions.gnome.org](https://extensions.gnome.org/extension/8794/gotify-notifications/)
+     
+2.  Click install
     
 
 ### Method 2: Manual Installation
@@ -73,6 +57,24 @@ gnome-extensions enable gotify-notifications@dodog.github.com
 
 # Restart GNOME Shell (Alt+F2, type 'r', press Enter)
  ```
+
+
+🖼️ Screenshots
+---------------
+
+
+*   Notifications example
+  
+  ![gotify-notifications](https://github.com/user-attachments/assets/05c7debd-58a0-4835-a4c9-bfa1db19fbcf)
+
+    
+*   Settings panel
+
+ ![gotify-notification-settings_v1 0 3](https://github.com/user-attachments/assets/8732517e-2aa2-41a2-860e-af4d4d894ba7)
+
+    
+
+
 ⚙️ Configuration
 ----------------
 
@@ -95,14 +97,16 @@ gnome-extensions enable gotify-notifications@dodog.github.com
     *   Or run: `gnome-extensions prefs gotify-notifications@dodog.github.com`
         
 
+
 ### Available Settings
 
-| Setting              | Type    | Default                  | Description                                          |
-|----------------------|---------|--------------------------|------------------------------------------------------|
-| Server URL           | String  | https://gotify.server.url| Your Gotify server address                           |
-| Client Token         | String  | (empty)                  | Your Gotify application token                        |
-| Poll Interval        | Integer | 10                       | How often to check for notifications (5-300 seconds) |
-| Notification Timeout | Integer | 0                        | Auto-close timer (0 = never auto-close)              |
+| Setting              | Type    | Default                  | Description                                           |
+|----------------------|---------|--------------------------|-------------------------------------------------------|
+| Server URL           | String  | https://gotify.server.url| Your Gotify server address                            |
+| Client Token         | String  | (empty)                  | Your Gotify application token                         |
+| Reguest timeout      | Integer | 10                       | How long to wait for server response (5-30 seconds)   |
+| Poll Interval        | Integer | 20                       | How often to check for notifications (10-300 seconds) |
+| Notification Timeout | Integer | 0                        | Auto-close timer (0 = never auto-close)               |
 
 🚀 Usage
 --------
@@ -116,7 +120,7 @@ gnome-extensions enable gotify-notifications@dodog.github.com
 *   Click the `✖` button to close individual notifications
     
 *   Use the status menu to test notifications or clear all
-    
+
 
 ### Status Indicator
 
@@ -164,6 +168,7 @@ gnome-extensions enable gotify-notifications@dodog.github.com
 journalctl \-f \-o cat | grep \-i gotify
  ```
 
+
 📁 File Structure
 -----------------
 
@@ -190,7 +195,7 @@ gotify-notifications@dodog.github.com/
 
 *   Verify your Gotify server URL and client token
     
-*   Check if curl is installed: `which curl`
+*   Enable debug
     
 *   Check logs: `journalctl -f -o cat | grep -i gotify`
     
@@ -209,30 +214,8 @@ gotify-notifications@dodog.github.com/
 *   Ensure schemas are properly compiled
     
 *   Check file permissions
-    
 
-### Debugging
-
-Enable debug logging by monitoring system logs:
-
- ```bash
-
-journalctl \-f \-o cat | grep \-i gotify
- ```
-
-🔧 Technical Details
---------------------
-
-### Notification System
-
-*   Custom `St.Widget` containers (not GNOME's notification system)
-    
-*   Completely independent and persistent
-    
-*   Stacking with automatic positioning
-    
-*   Smooth Clutter animations
-    
+        
 
 📋 Compatibility
 ----------------
@@ -240,8 +223,6 @@ journalctl \-f \-o cat | grep \-i gotify
 *   **GNOME Shell**: 46, 47, 48, 49
     
 *   **Gotify Server**: 2.0+
-    
-*   **Dependencies**: curl
     
 
 🤝 Contributing
@@ -256,6 +237,7 @@ Contributions are welcome! Please feel free to submit pull requests or open issu
 *   Test on multiple GNOME Shell versions
     
 *   Ensure compatibility with Gotify API
+
     
 
 📄 License
@@ -269,8 +251,7 @@ This project is licensed under the GPL-3.0 License - see the [LICENSE](https://
 *   Gotify team for the excellent notification server
     
 *   GNOME project for the extension system
-    
-*   Contributors and testers
+
     
 
 ❓ Support
