@@ -342,7 +342,6 @@ class NetworkClient extends GObject.Object {
     destroy() {
         if (this._session) {
             this._session.abort();
-            this._session.close();
             this._session = null;
         }
     }
