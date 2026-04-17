@@ -2,8 +2,8 @@
   "name": "Gotify Notifications",
   "description": "Display Gotify notifications in GNOME",
   "uuid": "gotify-notifications@dodog.github.com",
-  "shell-version": ["46", "47", "48", "49"],
+  "shell-version": ["46", "47", "48", "49", "50"],
   "url": "https://github.com/dodog/gotify-notifications",
-  "version": 5,
+  "version": 6,
   "settings-schema": "org.gnome.shell.extensions.gotify-notifications"
 }
