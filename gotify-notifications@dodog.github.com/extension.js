@@ -26,7 +26,7 @@ class NotificationManager extends GObject.Object {
         this._notifications = [];
     }
 
-    showCustomNotification(title, message) {
+    showCustomNotification(title, message, msgDate) {
         // Use debug mode setting if available
         const debugMode = this.extension._settings?.get_boolean('debug-mode') || false;
         if (debugMode) {
@@ -37,11 +37,12 @@ class NotificationManager extends GObject.Object {
         const lineHeight = 18;
         const maxLines = 8;
         const baseHeight = 80;
+        const dateLineHeight = 14;
         
         const wrappedText = this._wrapText(message || '', 50);
         const lineCount = Math.min(maxLines, wrappedText.split('\n').length);
         const messageHeight = lineCount * lineHeight;
-        const totalHeight = baseHeight + messageHeight;
+        const totalHeight = baseHeight + messageHeight + dateLineHeight;
         
         // Create main container
         const container = new St.BoxLayout({
@@ -87,9 +88,16 @@ class NotificationManager extends GObject.Object {
             text: wrappedText,
             style_class: 'gotify-message'
         });
-        
+
+        const dateStr = new Date(msgDate).toLocaleString();
+        const dateLabel = new St.Label({
+            text: dateStr,
+            style_class: 'gotify-footer'
+        });
+
         container.add_child(header);
         container.add_child(messageLabel);
+        container.add_child(dateLabel);
         
         // Position the notification
         const monitor = Main.layoutManager.primaryMonitor;
@@ -490,7 +498,8 @@ export default class GotifyExtension extends Extension {
             if (debugMode) {
                 console.log('Gotify: Manual custom test notification triggered');
             }
-            this._notificationManager.showCustomNotification('Manual Test', 'This is a persistent custom notification! Close with X button.');
+            const dateStr = new Date();
+            this._notificationManager.showCustomNotification('Manual Test', 'This is a persistent custom notification! Close with X button.', dateStr);
         });
         this._handlerIds.push({obj: testItem, id: testHandlerId});
         this._menuItems.push(testItem);
@@ -633,9 +642,11 @@ export default class GotifyExtension extends Extension {
             
             // Show user-friendly notification only once to avoid spam
             if (this._consecutiveErrors === 0) {
+                const dateStr = new Date();
                 this._notificationManager.showCustomNotification(
                     'Gotify Configuration Required',
-                    'Please set your Gotify server URL in extension settings.'
+                    'Please set your Gotify server URL in extension settings.',
+                    dateStr
                 );
             }
             
@@ -712,9 +723,11 @@ export default class GotifyExtension extends Extension {
 
             // Show connection error after multiple consecutive failures to avoid spam
             if (this._consecutiveErrors++ > 3) {
+                const dateStr = new Date();
                 this._notificationManager.showCustomNotification(
                     'Gotify Connection Error',
-                    `Cannot connect to server: ${error.message}`
+                    `Cannot connect to server: ${error.message}`,
+                    dateStr
                 );
                 this._consecutiveErrors = 0; // Reset counter after showing error
             }
