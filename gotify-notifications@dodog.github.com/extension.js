@@ -37,7 +37,7 @@ class NotificationManager extends GObject.Object {
         const lineHeight = 18;
         const maxLines = 8;
         const baseHeight = 80;
-        const dateLineHeight = 14;
+        const dateLineHeight = 16;
         
         const wrappedText = this._wrapText(message || '', 50);
         const lineCount = Math.min(maxLines, wrappedText.split('\n').length);
