@@ -21,7 +21,7 @@ jobs:
       - name: Stage extension files
         run: |
           mkdir -p build
-          cp -r src/. build/
+          cp -r gotify-notifications@dodog.github.com/. build/
 
       - name: Package extension
         run: |
