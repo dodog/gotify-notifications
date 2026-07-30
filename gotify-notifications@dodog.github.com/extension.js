@@ -113,7 +113,7 @@ class NotificationManager extends GObject.Object {
         // Auto-close if timeout is set (0 = never auto-close)
         const timeoutSeconds = this.extension._settings.get_int('notification-timeout');
         if (timeoutSeconds > 0) {
-            // STORE the timeout ID so it can be removed later
+            // Track the timeout ID so it can be cancelled if the notification is closed early
             container._autoCloseTimeoutId = GLib.timeout_add_seconds(
                 GLib.PRIORITY_DEFAULT, 
                 timeoutSeconds, 
@@ -205,7 +205,7 @@ class NotificationManager extends GObject.Object {
         }
     }
 
-    // Keep the existing animated version for normal use
+    // Animated close for user-triggered clearing
     clearAllNotifications() {
         const debugMode = this.extension._settings?.get_boolean('debug-mode') || false;
         if (debugMode) {
@@ -422,7 +422,7 @@ export default class GotifyExtension extends Extension {
             this._requestTimeoutChangedId = null;
         }
 
-        // SIGNAL CLEANUP: Disconnect all stored signal handlers
+        // Disconnect all stored signal handlers
         if (this._handlerIds) {
             this._handlerIds.forEach(({obj, id}) => {
                 if (obj && typeof obj.disconnect === 'function') {
@@ -432,7 +432,7 @@ export default class GotifyExtension extends Extension {
             this._handlerIds = null;
         }
         
-        // MENU ITEM CLEANUP: Destroy stored menu items
+        // Destroy stored menu items
         if (this._menuItems) {
             this._menuItems.forEach(item => {
                 if (item && typeof item.destroy === 'function') {
@@ -450,14 +450,11 @@ export default class GotifyExtension extends Extension {
         
         // Clean up status indicator
         if (this._statusIndicator) {
-            this._statusIndicator.destroy();
+            this._statusIndicator.destroy(); // also destroys _statusIcon, since it's a child actor
             this._statusIndicator = null;
         }
         
-        if (this._statusIcon) {
-            this._statusIcon.destroy();
-            this._statusIcon = null;
-        }
+        this._statusIcon = null;
         
         // Clean up network client
         if (this._networkClient) {
@@ -486,9 +483,6 @@ export default class GotifyExtension extends Extension {
         });
         
         this._statusIndicator.add_child(this._statusIcon);
-        
-        // Store menu item references
-        this._menuItems = [];
         
         const menu = this._statusIndicator.menu;
         
@@ -661,7 +655,7 @@ export default class GotifyExtension extends Extension {
             this._consecutiveErrors = 0;
         }
 
-        // SECURE URL no longer contains token
+        // Token is sent via header, not included in the URL
         const url = `${gotifyUrl}/message?limit=5`;
         
         if (debugMode) {
@@ -670,6 +664,11 @@ export default class GotifyExtension extends Extension {
         
         try {
             const bytes = await this._networkClient.httpGet(url);
+            
+            // Extension may have been disabled while this request was in flight
+            if (!this._settings || !this._notificationManager) {
+                return;
+            }
             
             if (!bytes) {
                 if (debugMode) {
@@ -698,7 +697,7 @@ export default class GotifyExtension extends Extension {
                         if (debugMode) {
                             console.log(`Gotify: New message found, showing custom notification: ${message.title}`);
                         }
-                        this._notificationManager.showCustomNotification(message.title, message.message);
+                        this._notificationManager.showCustomNotification(message.title, message.message, message.date);
                         this._lastMessageId = Math.max(this._lastMessageId, message.id);
                     }
                 }
@@ -715,6 +714,11 @@ export default class GotifyExtension extends Extension {
             
 
         } catch (error) {
+            // Extension may have been disabled while this request was in flight
+            if (!this._settings || !this._notificationManager) {
+                return;
+            }
+            
             if (debugMode) {
                 console.error('Gotify: Failed to poll:', error);
             }
