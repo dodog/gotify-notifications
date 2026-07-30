@@ -34,6 +34,11 @@
     line-height: 1.4;
 }
 
+.gotify-footer {
+    font-size: 14px;
+    color: #9FAFC6;
+}
+
 .gotify-close-button {
     background-color: transparent;
     border: none;
