@@ -21,15 +21,11 @@ A GNOME Shell extension that displays persistent notifications from your Gotify 
     
 *   🔄 **Auto-Polling** - Automatically checks for new notifications at configurable intervals
     
-*   🎨 **Custom Styling** - Beautiful rounded notifications with custom colors
-    
 *   📱 **Status Indicator** - System tray icon showing connection status (bell icons)
     
 *   🚫 **Non-Intrusive** - Doesn't interfere with GNOME's native notifications
     
 *   🎯 **Stacking Notifications** - Multiple notifications stack neatly at top of screen
-    
-*   🎪 **Smooth Animations** - Fade in/out effects for notifications
 
 
     
@@ -37,10 +33,11 @@ A GNOME Shell extension that displays persistent notifications from your Gotify 
 ---------------
 
 ### Method 1: 📦 Available on extensions.gnome.org:
+Install Gotify Notifications from [extensions.gnome.org](https://extensions.gnome.org/extension/8794/gotify-notifications/)
 
-1.  [👉 Install Gotify Notifications from extensions.gnome.org](https://extensions.gnome.org/extension/8794/gotify-notifications/)
+   <img alt="Get it on GNOME Extensions" width="228" src="assets/get-it-on-ego.svg?sanitize=true"></img>
      
-2.  Click install
+
     
 
 ### Method 2: Manual Installation
@@ -60,7 +57,7 @@ glib-compile-schemas schemas/
 # Enable the extension
 gnome-extensions enable gotify-notifications@dodog.github.com
 
-# Restart GNOME Shell (Alt+F2, type 'r', press Enter)
+# Restart GNOME Shell (logout / login)
  ```
 
 
@@ -68,15 +65,11 @@ gnome-extensions enable gotify-notifications@dodog.github.com
 ---------------
 
 
-*   Notifications example
+*   Notifications example and Settings panel
   
-  ![gotify-notifications](https://github.com/user-attachments/assets/05c7debd-58a0-4835-a4c9-bfa1db19fbcf)
+  ![gotify-notifications](assets/screenshot.jpg)
 
     
-*   Settings panel
-
- ![gotify-notification-settings_v1 0 3](https://github.com/user-attachments/assets/8732517e-2aa2-41a2-860e-af4d4d894ba7)
-
     
 
 
@@ -261,13 +254,14 @@ This project is licensed under the GPL-3.0 License - see the [LICENSE](https://
 
 ❓ Support
 ---------
+If this extension is helping you in your daily life you can buy me a coffee.    
+[![Buy Me A Coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=☕&slug=dodog&button_colour=FFDD00&font_colour=000000&font_family=Lato&outline_colour=000000&coffee_colour=ffffff)](https://www.buymeacoffee.com/dodog)
 
 *   **Issues**: [GitHub Issues](https://github.com/dodog/gotify-notifications/issues)
     
 *   **Gotify Documentation**: [gotify.net](https://gotify.net/docs)
     
 *   **GNOME Extensions**: [extensions.gnome.org](https://extensions.gnome.org/)
-    
 
 * * *
 
