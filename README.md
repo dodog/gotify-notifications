@@ -35,7 +35,7 @@ A GNOME Shell extension that displays persistent notifications from your Gotify 
 ### Method 1: 📦 Available on extensions.gnome.org:
 Install Gotify Notifications from [extensions.gnome.org](https://extensions.gnome.org/extension/8794/gotify-notifications/)
 
-   <img alt="Get it on GNOME Extensions" width="228" src="assets/get-it-on-ego.svg?sanitize=true"></img>
+ <a href="https://extensions.gnome.org/extension/8794/gotify-notification" target="_blank"><img alt="Get it on GNOME Extensions" width="228" src="assets/get-it-on-ego.svg?sanitize=true"></img></a>
      
 
     
