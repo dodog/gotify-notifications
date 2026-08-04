@@ -1,5 +1,6 @@
 
 [<img src="https://img.shields.io/badge/GNOME-48+-orange?style=flat-square&logo=gnome"/>](#)  [<img src="https://img.shields.io/badge/Gotify-Compatible-success?style=flat-square"/>](#) 
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy_Me_A_Coffee-FFDD00?style=flat-square&logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/dodog)
 
 Gotify Notifications GNOME Extension
 ====================================
