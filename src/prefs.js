@@ -5,7 +5,6 @@
 
 'use strict';
 
-import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
@@ -33,15 +32,6 @@ export default class GotifyPreferences extends ExtensionPreferences {
             // Update subtitle with current UI value
             const currentDisplayValue = pollRow.get_value();
             pollRow.set_subtitle(`Check for notifications every ${currentDisplayValue}s (must be ≥ ${minPollInterval}s = ${timeoutValue}s timeout + 5s buffer)`);
-        };
-            
-        // Helper: update notification timeout subtitle dynamically
-        const updateNotificationTimeoutSubtitle = () => {
-            const timeout = settings.get_int('notification-timeout');
-            const subtitle = timeout === 0
-                ? 'Notifications persist until manually closed'
-                : `Notifications auto-close after ${timeout} seconds`;
-            notificationTimeoutRow.set_subtitle(subtitle);
         };
         
         // Main page
@@ -139,6 +129,15 @@ export default class GotifyPreferences extends ExtensionPreferences {
             digits: 0
         });
         settings.bind('notification-timeout', notificationTimeoutRow, 'value', Gio.SettingsBindFlags.DEFAULT);
+        
+        // Helper: update notification timeout subtitle dynamically
+        const updateNotificationTimeoutSubtitle = () => {
+            const timeout = settings.get_int('notification-timeout');
+            const subtitle = timeout === 0
+                ? 'Notifications persist until manually closed'
+                : `Notifications auto-close after ${timeout} seconds`;
+            notificationTimeoutRow.set_subtitle(subtitle);
+        };
         
         // Add dynamic subtitle for notification timeout
         notificationTimeoutRow.connect('changed', updateNotificationTimeoutSubtitle);
