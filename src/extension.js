@@ -9,6 +9,7 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
+import Pango from 'gi://Pango';
 import Soup from 'gi://Soup';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -26,19 +27,15 @@ class NotificationManager extends GObject.Object {
         this._notifications = [];
     }
 
-    showCustomNotification(title, message, msgDate) {
+    showCustomNotification(title, message, msgDate, messageId = null) {
         this.extension._log(`Creating custom notification: ${title}`);
 
         // Calculate needed height based on message length
         const lineHeight = 18;
-        const maxLines = 8;
-        const baseHeight = 80;
-        const dateLineHeight = 16;
+        const maxLines = 16;
+        const maxMessageAreaHeight = maxLines * lineHeight;
 
-        const wrappedText = this._wrapText(message || '', 50);
-        const lineCount = Math.min(maxLines, wrappedText.split('\n').length);
-        const messageHeight = lineCount * lineHeight;
-        const totalHeight = baseHeight + messageHeight + dateLineHeight;
+        const messageText = message || '';
 
         // Create main container
         const container = new St.BoxLayout({
@@ -46,8 +43,7 @@ class NotificationManager extends GObject.Object {
             style_class: 'gotify-notification',
             reactive: true,
             track_hover: true,
-            width: 500,
-            height: totalHeight
+            width: 500
         });
 
         // Header with title and close button
@@ -75,13 +71,34 @@ class NotificationManager extends GObject.Object {
         });
 
         header.add_child(titleLabel);
+
+        // Show delete-on-server button for Gotify messages
+        if (messageId !== null && messageId !== undefined) {
+            const deleteButton = new St.Button({
+                style_class: 'gotify-delete-button',
+                child: new St.Icon({ icon_name: 'user-trash-symbolic', style_class: 'gotify-delete-icon' })
+            });
+
+            container._deleteButton = deleteButton;
+            container._deleteHandlerId = deleteButton.connect('clicked', () => {
+                this.extension._log(`Deleting message ${messageId} on server`);
+                deleteButton.reactive = false; // prevent double-clicks
+                this._deleteMessageOnServer(messageId, container);
+            });
+
+            header.add_child(deleteButton);
+        }
+
         header.add_child(closeButton);
 
-        // Message content with manual wrapping
+        // Message content with native wrapping
         const messageLabel = new St.Label({
-            text: wrappedText,
+            text: messageText,
             style_class: 'gotify-message'
         });
+        messageLabel.clutter_text.line_wrap = true;
+        messageLabel.clutter_text.line_wrap_mode = Pango.WrapMode.WORD_CHAR;
+        messageLabel.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
 
         const dateStr = new Date(msgDate).toLocaleString();
         const dateLabel = new St.Label({
@@ -89,17 +106,50 @@ class NotificationManager extends GObject.Object {
             style_class: 'gotify-footer'
         });
 
+        // Wrap the message label
+        const messageWrapper = new St.BoxLayout({
+            orientation: Clutter.Orientation.VERTICAL,
+            x_expand: true
+        });
+        messageWrapper.add_child(messageLabel);
+
         container.add_child(header);
-        container.add_child(messageLabel);
+        container.add_child(messageWrapper);
         container.add_child(dateLabel);
+
+        // Add to the UI
+        Main.uiGroup.add_child(container);
+
+        // Clip only the message area
+        let [, messageNaturalHeight] = messageLabel.get_preferred_height(470);
+        if (messageNaturalHeight > maxMessageAreaHeight) {
+            messageWrapper.height = maxMessageAreaHeight;
+            messageWrapper.clip_to_allocation = true;
+
+            // Add info when message too long
+            const truncatedLabel = new St.Label({
+                text: '⋯ message too long - truncated',
+                style_class: 'gotify-truncated-notice'
+            });
+            container.insert_child_below(truncatedLabel, dateLabel);
+        }
+
+        let [, naturalHeight] = container.get_preferred_height(500);
+        container._notificationHeight = naturalHeight;
+
+        // Fix for fullscreen overlay (unredirecting)
+        global.compositor.disable_unredirect();
+        container._unredirectDisabled = true;
 
         // Position the notification
         const monitor = Main.layoutManager.primaryMonitor;
         container.x = Math.floor((monitor.width - 400) / 2);
-        container.y = 20 + (this._notifications.length * (totalHeight + 10));
 
-        // Add to UI
-        Main.uiGroup.add_child(container);
+        let offsetY = 20;
+        this._notifications.forEach(n => {
+            offsetY += n._notificationHeight + 10;
+        });
+        container.y = offsetY;
 
         // Store reference
         this._notifications.push(container);
@@ -129,39 +179,26 @@ class NotificationManager extends GObject.Object {
         });
     }
 
-    // Wrapping helper function
-    _wrapText(text, maxLineLength = 50) {
-        if (!text) return '';
+    // Delete the message on the Gotify server
+    async _deleteMessageOnServer(messageId, container) {
+        const gotifyUrl = this.extension._settings.get_string('gotify-url');
 
-        const words = text.split(' ');
-        let lines = [];
-        let currentLine = '';
-
-        words.forEach(word => {
-            // If adding this word would make the line too long, start a new line
-            if (currentLine.length + word.length + 1 > maxLineLength) {
-                if (currentLine) {
-                    lines.push(currentLine);
-                    currentLine = word;
-                } else {
-                    // Single word is longer than maxLineLength, split it
-                    while (word.length > maxLineLength) {
-                        lines.push(word.substring(0, maxLineLength));
-                        word = word.substring(maxLineLength);
-                    }
-                    currentLine = word;
-                }
-            } else {
-                currentLine = currentLine ? currentLine + ' ' + word : word;
-            }
-        });
-
-        // Add the last line
-        if (currentLine) {
-            lines.push(currentLine);
+        if (!gotifyUrl) {
+            this.extension._log('Cannot delete message: no Gotify URL configured', true);
+            this._removeNotification(container);
+            return;
         }
 
-        return lines.join('\n');
+        const url = `${gotifyUrl}/message/${messageId}`;
+
+        try {
+            await this.extension._networkClient.httpDelete(url);
+            this.extension._log(`Message ${messageId} deleted on server`);
+        } catch (error) {
+            this.extension._log(`Failed to delete message ${messageId} on server: ${error}`, true);
+        }
+
+        this._removeNotification(container);
     }
 
     destroy() {
@@ -182,6 +219,19 @@ class NotificationManager extends GObject.Object {
                 notification._closeButton.disconnect(notification._closeHandlerId);
                 notification._closeHandlerId = null;
                 notification._closeButton = null;
+            }
+
+            // Disconnect the delete button signal safely
+            if (notification._deleteHandlerId && notification._deleteButton) {
+                notification._deleteButton.disconnect(notification._deleteHandlerId);
+                notification._deleteHandlerId = null;
+                notification._deleteButton = null;
+            }
+
+            // Re-allow compositor unredirection 
+            if (notification._unredirectDisabled) {
+                global.compositor.enable_unredirect();
+                notification._unredirectDisabled = false;
             }
 
             // Destroy immediately without animation
@@ -217,6 +267,19 @@ class NotificationManager extends GObject.Object {
             notification._closeButton = null;
         }
 
+        // Disconnect the delete button signal safely
+        if (notification._deleteHandlerId && notification._deleteButton) {
+            notification._deleteButton.disconnect(notification._deleteHandlerId);
+            notification._deleteHandlerId = null;
+            notification._deleteButton = null;
+        }
+
+        // Re-allow compositor unredirection
+        if (notification._unredirectDisabled) {
+            global.compositor.enable_unredirect();
+            notification._unredirectDisabled = false;
+        }
+
         // Try animation, but have fallback for immediate destruction
         notification.ease({
             opacity: 0,
@@ -238,8 +301,10 @@ class NotificationManager extends GObject.Object {
     }
 
     _repositionNotifications() {
-        this._notifications.forEach((notification, index) => {
-            notification.y = 20 + (index * 130);
+        let offsetY = 20;
+        this._notifications.forEach(notification => {
+            notification.y = offsetY;
+            offsetY += notification._notificationHeight + 10;
         });
     }
 });
@@ -255,6 +320,14 @@ class NetworkClient extends GObject.Object {
         this._session.user_agent = 'gotify-notifications-extension/1.0';
     }
 
+    // Shared auth header used by every request
+    _addAuthHeader(headers) {
+        const clientToken = this.extension._settings.get_string('client-token') || '';
+        if (clientToken) {
+            headers.append('X-Gotify-Key', clientToken);
+        }
+    }
+
     async httpGet(url) {
         return new Promise((resolve, reject) => {
             this.extension._log(`Making HTTP request with Soup to: ${url}`);
@@ -268,18 +341,11 @@ class NetworkClient extends GObject.Object {
 
             // Set headers
             const headers = message.get_request_headers();
-
-            // Use Authorization header instead of URL parameter
-            const clientToken = this.extension._settings.get_string('client-token') || '';
-            if (clientToken) {
-                headers.append('X-Gotify-Key', clientToken);
-            }
-
+            this._addAuthHeader(headers);
             headers.append('Accept', 'application/json');
-            headers.append('User-Agent', 'gotify-notifications-extension/1.0');
 
             this._session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, null, (session, result) => {
-                const bytes = this._session.send_and_read_finish(result);
+                const bytes = session.send_and_read_finish(result);
                 const status = message.get_status();
 
                 this.extension._log(`HTTP status: ${status}`);
@@ -303,6 +369,39 @@ class NetworkClient extends GObject.Object {
                     } else {
                         reject(new Error(errorMsg));
                     }
+                }
+            });
+        });
+    }
+
+    async httpDelete(url) {
+        return new Promise((resolve, reject) => {
+            this.extension._log(`Making HTTP DELETE request with Soup to: ${url}`);
+
+            const message = Soup.Message.new('DELETE', url);
+
+            if (!message) {
+                reject(new Error('Could not create message for URL: ' + url));
+                return;
+            }
+
+            const headers = message.get_request_headers();
+            this._addAuthHeader(headers);
+            headers.append('Accept', 'application/json');
+
+            this._session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, null, (session, result) => {
+                session.send_and_read_finish(result);
+                const status = message.get_status();
+
+                this.extension._log(`HTTP DELETE status: ${status}`);
+
+                if (status === Soup.Status.OK || status === Soup.Status.NO_CONTENT) {
+                    this.extension._log('HTTP DELETE request successful');
+                    resolve(true);
+                } else {
+                    const errorMsg = `HTTP error ${status}`;
+                    this.extension._log(`Soup DELETE request failed: ${errorMsg}`, true);
+                    reject(new Error(errorMsg));
                 }
             });
         });
@@ -615,7 +714,7 @@ export default class GotifyExtension extends Extension {
                     this._log(`Message ${message.id}: ${message.title} - ${message.message}`);
                     if (message.id > this._lastMessageId) {
                         this._log(`New message found, showing custom notification: ${message.title}`);
-                        this._notificationManager.showCustomNotification(message.title, message.message, message.date);
+                        this._notificationManager.showCustomNotification(message.title, message.message, message.date, message.id);
                         this._lastMessageId = Math.max(this._lastMessageId, message.id);
                     }
                 }
