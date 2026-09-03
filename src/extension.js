@@ -20,6 +20,7 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 
 // Notification Manager class to handle notification-related functionality
 const NotificationManager = GObject.registerClass(
+{ GTypeName: 'GotifyNotificationsNotificationManager' },
 class NotificationManager extends GObject.Object {
     constructor(extension) {
         super();
@@ -60,6 +61,7 @@ class NotificationManager extends GObject.Object {
 
         const closeButton = new St.Button({
             style_class: 'gotify-close-button',
+            accessible_name: 'Close notification',
             child: new St.Icon({ icon_name: 'window-close-symbolic', style_class: 'gotify-close-icon' })
         });
 
@@ -76,6 +78,7 @@ class NotificationManager extends GObject.Object {
         if (messageId !== null && messageId !== undefined) {
             const deleteButton = new St.Button({
                 style_class: 'gotify-delete-button',
+                accessible_name: 'Delete message on server',
                 child: new St.Icon({ icon_name: 'user-trash-symbolic', style_class: 'gotify-delete-icon' })
             });
 
@@ -311,6 +314,7 @@ class NotificationManager extends GObject.Object {
 
 // Network Client class to handle HTTP requests using Soup
 const NetworkClient = GObject.registerClass(
+{ GTypeName: 'GotifyNotificationsNetworkClient' },
 class NetworkClient extends GObject.Object {
     constructor(extension) {
         super();
