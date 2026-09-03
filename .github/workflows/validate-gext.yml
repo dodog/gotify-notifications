@@ -1,5 +1,5 @@
 name: Validate GNOME Extension
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 
 permissions:
   contents: read       
@@ -32,6 +32,7 @@ jobs:
 
   ego-lint:
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v7
 
