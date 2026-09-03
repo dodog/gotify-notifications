@@ -132,7 +132,7 @@ export default class GotifyPreferences extends ExtensionPreferences {
         
         // Helper: update notification timeout subtitle dynamically
         const updateNotificationTimeoutSubtitle = () => {
-            const timeout = settings.get_int('notification-timeout');
+            const timeout = notificationTimeoutRow.get_value();
             const subtitle = timeout === 0
                 ? 'Notifications persist until manually closed'
                 : `Notifications auto-close after ${timeout} seconds`;
