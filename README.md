@@ -7,8 +7,10 @@ Gotify Notifications GNOME Extension
 
 
 <img width="64" height="64" alt="64x64" src="https://github.com/user-attachments/assets/5ded70b3-6945-487a-b660-c802a753c1cb" align="left" style="margin-right:15px"/>
-A GNOME Shell extension that displays persistent notifications from your Gotify server. Features custom notification windows that stay visible until manually closed, completely independent of GNOME's native notification system.
 
+A GNOME Shell extension that displays **persistent notifications** from your **Gotify server**. Features custom notification windows that stay visible until manually closed, **completely independent** of GNOME's native notification system.
+
+****
 
 
 ✨ Features
@@ -16,7 +18,7 @@ A GNOME Shell extension that displays persistent notifications from your Gotify 
 
 *   🔔 **Independent Persistent Notifications** - Custom notification windows that stay until manually closed
     
-*   📝 **Text Wrapping** - Automatic wrapping for long messages with manual line breaking
+*   📝 **Text Wrapping** - Automatic wrapping for long messages - very long messages are truncated
     
 *   ⚙️ **Configurable Settings** - Easy GUI configuration for server URL, secure token and behavior
     
@@ -28,6 +30,8 @@ A GNOME Shell extension that displays persistent notifications from your Gotify 
     
 *   🎯 **Stacking Notifications** - Multiple notifications stack neatly at top of screen
 
+*   🗑️ **Delete notification** - Option to delete notification directly from server
+
 
     
 🚀 Install Now
@@ -36,7 +40,7 @@ A GNOME Shell extension that displays persistent notifications from your Gotify 
 ### Method 1: 📦 Available on extensions.gnome.org:
 Install Gotify Notifications from [extensions.gnome.org](https://extensions.gnome.org/extension/8794/gotify-notifications/)
 
- <a href="https://extensions.gnome.org/extension/8794/gotify-notification" target="_blank"><img alt="Get it on GNOME Extensions" width="228" src="assets/get-it-on-ego.svg?sanitize=true"></img></a>
+ <a href="https://extensions.gnome.org/extension/8794/gotify-notifications" target="_blank"><img alt="Get it on GNOME Extensions" width="228" src="assets/get-it-on-ego.svg?sanitize=true"></img></a>
      
 
     
@@ -219,7 +223,7 @@ gotify-notifications@dodog.github.com/
 📋 Compatibility
 ----------------
 
-*   **GNOME Shell**: 46, 47, 48, 49
+*   **GNOME Shell**: 46, 47, 48, 49, 50
     
 *   **Gotify Server**: 2.0+
     
