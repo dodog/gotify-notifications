@@ -39,6 +39,14 @@
     color: #9FAFC6;
 }
 
+.gotify-truncated-notice {
+    font-size: 13px;
+    font-style: italic;
+    color: #FFD700;
+    margin-top: 4px;
+    margin-bottom: 6px;
+}
+
 .gotify-close-button {
     background-color: transparent;
     border: none;
@@ -55,6 +63,25 @@
 
 .gotify-close-button:hover {
     background-color: rgba(255, 215, 0, 0.2);
+}
+
+.gotify-delete-button {
+    background-color: transparent;
+    border: none;
+    border-radius: 10px;
+    padding: 5px;
+    width: 20px;
+    height: 20px;
+    margin-right: 4px;
+}
+
+.gotify-delete-icon {
+    color: #FF6B6B;
+    font-size: 14px;
+}
+
+.gotify-delete-button:hover {
+    background-color: rgba(255, 107, 107, 0.2);
 }
 
 .gotify-notification:hover {
