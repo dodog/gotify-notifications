@@ -56,13 +56,11 @@ git clone https://github.com/dodog/gotify-notifications.git
 cp \-r gotify-notifications/gotify-notifications@dodog.github.com ~/.local/share/gnome-shell/extensions/
 
 # Compile schemas
-cd ~/.local/share/gnome-shell/extensions/gotify-notifications@dodog.github.com
-glib-compile-schemas schemas/
+glib-compile-schemas  ~/.local/share/gnome-shell/extensions/gotify-notifications@dodog.github.com/schemas/
 
-# Enable the extension
+# Log out and log in, then enable the extension:
 gnome-extensions enable gotify-notifications@dodog.github.com
 
-# Restart GNOME Shell (logout / login)
  ```
 
 
