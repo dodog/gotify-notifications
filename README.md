@@ -143,38 +143,11 @@ gnome-extensions enable gotify-notifications@dodog.github.com
 *   **Clear All Notifications**: Remove all active notifications
     
 
-🏗️ Building from Source
-------------------------
-
-### Prerequisites
-
-*   GNOME Shell 46+
-    
-*   `glib-compile-schemas`
-    
-*   Git
-    
-
-### Development Setup
-
- ```bash
-
-git clone https://github.com/dodog/gotify-notifications.git
-cd gnome-gotify-notifications
-
-# Enable development mode
-gnome-extensions enable gotify-notifications@dodog.github.com
-
-# Monitor logs for debugging
-journalctl \-f \-o cat | grep \-i gotify
- ```
-
 
 📁 File Structure
 -----------------
 
  ```bash
-
 
 gotify-notifications@dodog.github.com/
 ├── extension.js          # Main extension code
