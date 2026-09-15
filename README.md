@@ -4,7 +4,7 @@
 [![Extension 3](https://img.shields.io/badge/-Vertigrid-green?style=for-the-badge&logo=gnome&logoColor=white&labelColor=555555)](https://github.com/dodog/vertigrid)
 
 
-[<img src="https://img.shields.io/badge/GNOME-48+-orange?style=flat-square&logo=gnome"/>](#)  [<img src="https://img.shields.io/badge/Gotify-Compatible-success?style=flat-square"/>](#) 
+[<img src="https://img.shields.io/badge/GNOME-46+-orange?style=flat-square&logo=gnome"/>](#)  [<img src="https://img.shields.io/badge/Gotify-Compatible-success?style=flat-square"/>](#) 
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy_Me_A_Coffee-FFDD00?style=flat-square&logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/dodog)
 
 Gotify Notifications GNOME Extension
@@ -199,7 +199,7 @@ gotify-notifications@dodog.github.com/
 📋 Compatibility
 ----------------
 
-*   **GNOME Shell**: 46, 47, 48, 49, 50
+*   **GNOME Shell**: 46, 47, 48, 49, 50, 51
     
 *   **Gotify Server**: 2.0+
     
@@ -224,7 +224,7 @@ Contributions are welcome! Please feel free to submit pull requests or open issu
 
 This project is licensed under the GPL-3.0 License - see the [LICENSE](https://github.com/dodog/gotify-notifications/blob/main/LICENSE) file for details.
 
-🙏 Acknowledgments
+🙏 Acknowledgements
 ------------------
 
 *   Gotify team for the excellent notification server
